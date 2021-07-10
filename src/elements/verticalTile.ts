@@ -1,9 +1,5 @@
-export enum Side {
-  up = "up",
-  down = "down",
-  left = "left",
-  right = "right",
-}
+import { Side } from "../enums";
+
 export class VerticalTile extends Phaser.Physics.Arcade.Sprite {
   constructor(
     scene: Phaser.Scene,

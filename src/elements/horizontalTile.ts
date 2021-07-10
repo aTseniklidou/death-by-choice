@@ -1,4 +1,4 @@
-import { Side } from "./verticalTile";
+import { Side } from "../enums";
 
 export class HorizontalTile extends Phaser.Physics.Arcade.Sprite {
   constructor(

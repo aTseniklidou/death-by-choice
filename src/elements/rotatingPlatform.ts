@@ -1,8 +1,10 @@
+import { Side } from "../enums";
 import { Direction, Platform } from "./platform";
 
 export class RotatingPlatform extends Platform {
   private newAngle: number;
   private isFacingUp: boolean;
+  private sideWithHazard: Side;
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -12,11 +14,12 @@ export class RotatingPlatform extends Platform {
     speed: number,
     movesOn: Direction,
     rotationInterval: number,
+    sideWithHazard: Side,
     frame?: string | number
   ) {
     super(scene, x, y, texture, distance, speed, movesOn, frame);
-    // this.setOrigin(0.5, 0.8);
     this.newAngle = 0;
+    this.sideWithHazard = sideWithHazard;
     this.scene.time.addEvent({
       callback: this.rotate,
       callbackScope: this,
@@ -44,8 +47,21 @@ export class RotatingPlatform extends Platform {
     }
   }
 
-  public hazardIsUp(): boolean {
-    return this.isFacingUp;
+  public collisionWithHazard(): boolean {
+    return (
+      (this.isFacingUp &&
+        this.sideWithHazard === Side.up &&
+        this.body.touching.up) ||
+      (!this.isFacingUp &&
+        this.sideWithHazard === Side.up &&
+        this.body.touching.down) ||
+      (this.isFacingUp &&
+        this.sideWithHazard === Side.down &&
+        this.body.touching.down) ||
+      (!this.isFacingUp &&
+        this.sideWithHazard === Side.down &&
+        this.body.touching.up)
+    );
   }
 
   public getBody(): Phaser.Physics.Arcade.Body {

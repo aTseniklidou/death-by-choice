@@ -4,7 +4,7 @@ import { Player } from "../elements/player";
 import { Text } from "../elements/base/text";
 import { Score, ScoreOperations } from "../elements/score";
 import { Tile } from "../elements/base/tile";
-import { EVENTS, WAYS_TO_DIE } from "../enums";
+import { EVENTS, Side, WAYS_TO_DIE } from "../enums";
 import { Projectile } from "../elements/projectile";
 import { Trap } from "../trap";
 import { Direction, Platform } from "../elements/platform";
@@ -17,7 +17,7 @@ import {
   staticGroupSettings,
 } from "../configs";
 import { RotatingPlatform } from "../elements/rotatingPlatform";
-import { Side, VerticalTile } from "../elements/verticalTile";
+import { VerticalTile } from "../elements/verticalTile";
 import { HorizontalTile } from "../elements/horizontalTile";
 
 const platformWithFruit = 1100;
@@ -88,10 +88,12 @@ export class Level1 extends Level {
 
   private setupColliders() {
     this.physics.add.collider(this.player, this.groundLayer);
+    this.physics.add.collider(this.player, this.wallGroup);
+    this.physics.add.collider(this.player, this.recoilGroup);
+
     this.physics.add.collider(this.player, this.spikes, () => {
       this.player.getDamage(1, WAYS_TO_DIE.spikes);
     });
-    this.physics.add.collider(this.player, this.wallGroup);
     this.physics.add.overlap(
       this.player,
       this.collectables,
@@ -124,16 +126,9 @@ export class Level1 extends Level {
         ) {
           this.player.getDamage(1, WAYS_TO_DIE.crashed);
         }
-        const hazardIsUp = platform.hazardIsUp && platform.hazardIsUp();
-        if (
-          (hazardIsUp && platform.body.touching.up) ||
-          (platform.hazardIsUp && !hazardIsUp && platform.body.touching.down)
-        ) {
+        if (platform.collisionWithHazard && platform.collisionWithHazard()) {
           this.player.getDamage(1, WAYS_TO_DIE.burned);
         }
-        //is on platform
-        //player.setDragX(platform.body.velocity.x);
-        // player.body.x -= platform.body.x - platform.getBody().prev.x;
       }
     );
 
@@ -456,7 +451,8 @@ export class Level1 extends Level {
         -50,
         80,
         Direction.vertical,
-        2000
+        2000,
+        Side.up
       )
     );
   }

@@ -27,3 +27,10 @@ export enum ANIMATIONS {
   enemyRun = "enemy-run",
   collectableIdle = "collectable-idle",
 }
+
+export enum Side {
+  up = "up",
+  down = "down",
+  left = "left",
+  right = "right",
+}
