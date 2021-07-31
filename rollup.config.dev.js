@@ -3,6 +3,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import serve from 'rollup-plugin-serve';
 import typescript from 'rollup-plugin-typescript2';
+import copy from 'rollup-plugin-copy';
 
 export default {
 
@@ -35,6 +36,12 @@ export default {
             'typeof PLUGIN_FBINSTANT': JSON.stringify(false),
             'typeof FEATURE_SOUND': JSON.stringify(true)
         }),
+        copy({
+            targets: [
+              { src: 'src/index.html', dest: 'dev' },
+              { src: 'src/assets/**/*', dest: 'dev/assets' }
+            ]
+          }),
 
         //  Parse our .ts source files
         resolve({
@@ -60,7 +67,7 @@ export default {
         //  See https://www.npmjs.com/package/rollup-plugin-serve for config options
         serve({
             open: true,
-            contentBase: 'docs',
+            contentBase: 'dev',
             host: 'localhost',
             port: 10001,
             headers: {
