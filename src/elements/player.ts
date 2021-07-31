@@ -12,6 +12,7 @@ export class Player extends Character {
   private canJump: boolean;
   private wallJumped: boolean;
   private canDoubleJump: boolean;
+  private canWallJump: boolean;
   private wallSliding: boolean;
 
   private isOnWall: boolean;
@@ -36,6 +37,7 @@ export class Player extends Character {
 
     this.canJump = true;
     this.canDoubleJump = false;
+    this.canWallJump = false;
     this.isOnWall = false;
     this.getBody().setSize(
       frameSettingsPlayer.frameWidth,
@@ -151,11 +153,11 @@ export class Player extends Character {
     if (!this.wallJumped) {
       this.getBody().setVelocityX(0);
     }
-    this.handleWallSlide();
+    this.canWallJump && this.handleWallSlide();
 
     this.handleMove();
 
-    this.handleWallGrab();
+    this.canWallJump && this.handleWallGrab();
 
     if (!this.isOnWall && this.body.velocity.y > 0) {
       this.anims.play(ANIMATIONS.playerFall, true);
@@ -195,5 +197,9 @@ export class Player extends Character {
     if (this.hp <= 0) {
       this.scene.game.events.emit(EVENTS.died, wayToDie);
     }
+  }
+
+  public setWallJump(flag: boolean): void {
+    this.canWallJump = flag;
   }
 }

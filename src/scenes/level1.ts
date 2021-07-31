@@ -45,6 +45,7 @@ const levelObjectives = [
 export class Level1 extends Level {
   protected groundLayer!: Phaser.GameObjects.Group;
   protected wallGroup!: Phaser.GameObjects.Group;
+  protected worldWallsGroup!: Phaser.GameObjects.Group;
   protected ground!: Tile;
   protected enemies!: Phaser.GameObjects.Group;
   protected projectilesGroup!: Phaser.GameObjects.Group;
@@ -87,9 +88,18 @@ export class Level1 extends Level {
   }
 
   private setupColliders() {
-    this.physics.add.collider(this.player, this.groundLayer);
-    this.physics.add.collider(this.player, this.wallGroup);
-    this.physics.add.collider(this.player, this.recoilGroup);
+    this.physics.add.collider(this.player, this.groundLayer, () => {
+      this.player.setWallJump(false);
+    });
+    this.physics.add.collider(this.player, this.wallGroup, () => {
+      this.player.setWallJump(true);
+    });
+    this.physics.add.collider(this.player, this.worldWallsGroup, () => {
+      this.player.setWallJump(false);
+    });
+    this.physics.add.collider(this.player, this.recoilGroup, () => {
+      this.player.setWallJump(false);
+    });
 
     this.physics.add.collider(this.player, this.spikes, () => {
       this.player.getDamage(1, WAYS_TO_DIE.spikes);
@@ -98,6 +108,7 @@ export class Level1 extends Level {
       this.player,
       this.collectables,
       (_, collectable) => {
+        this.player.setWallJump(false);
         collectable.destroy();
         this.collectables.remove(collectable);
         this.scoreLeft.changeValue(ScoreOperations.DECREASE, 1);
@@ -120,6 +131,7 @@ export class Level1 extends Level {
       this.player,
       this.platformGroup,
       (player: Player, platform: RotatingPlatform) => {
+        this.player.setWallJump(false);
         if (
           (platform.body.touching.down && player.body.touching.down) ||
           (platform.body.touching.up && player.body.touching.up)
@@ -150,6 +162,13 @@ export class Level1 extends Level {
     );
     this.physics.add.collider(
       this.wallGroup,
+      this.projectilesGroup,
+      (_, projectile) => {
+        (projectile as Projectile).disableBody(true, true);
+      }
+    );
+    this.physics.add.collider(
+      this.worldWallsGroup,
       this.projectilesGroup,
       (_, projectile) => {
         (projectile as Projectile).disableBody(true, true);
@@ -286,6 +305,7 @@ export class Level1 extends Level {
   private setupLevel(): void {
     this.groundLayer = this.physics.add.group(staticGroupSettings);
     this.wallGroup = this.physics.add.group(staticGroupSettings);
+    this.worldWallsGroup = this.physics.add.group(staticGroupSettings);
     this.platformGroup = this.physics.add.group(staticGroupSettings);
     this.recoilGroup = this.physics.add.group(staticGroupSettings);
 
@@ -297,7 +317,7 @@ export class Level1 extends Level {
     const totalHorizontalWalls = this.game.canvas.width / outerWallSize + 1;
     const totalVerticalWalls = this.game.canvas.height / outerWallSize + 1;
     for (let tileNo = 0; tileNo < totalHorizontalWalls; tileNo++) {
-      this.wallGroup.add(
+      this.worldWallsGroup.add(
         new HorizontalTile(
           this,
           tileNo * outerWallSize + outerWallSize,
@@ -310,7 +330,7 @@ export class Level1 extends Level {
     }
 
     for (let tileNo = 0; tileNo < totalVerticalWalls; tileNo++) {
-      this.wallGroup.add(
+      this.worldWallsGroup.add(
         new VerticalTile(
           this,
           outerWallThickness,
@@ -335,7 +355,7 @@ export class Level1 extends Level {
           )
         );
       } else {
-        this.wallGroup.add(
+        this.worldWallsGroup.add(
           new VerticalTile(
             this,
             this.game.canvas.width,
