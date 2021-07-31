@@ -17,7 +17,7 @@ export default {
     //  The 'intro' property can be removed if using Phaser 3.21 or above. Keep it for earlier versions.
     output: {
         file: './docs/game.js',
-        name: 'MyGame',
+        name: 'DeathByChoice',
         format: 'iife',
         sourcemap: false,
         intro: 'var global = window;'

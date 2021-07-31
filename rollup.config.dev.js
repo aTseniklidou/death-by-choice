@@ -16,8 +16,8 @@ export default {
     //  You can also use 'umd' if you need to ingest your game into another system.
     //  The 'intro' property can be removed if using Phaser 3.21 or above. Keep it for earlier versions.
     output: {
-        file: './docs/game.js',
-        name: 'MyGame',
+        file: './dev/game.js',
+        name: 'DeathByChoiceDev',
         format: 'iife',
         sourcemap: true,
         intro: 'var global = window;'

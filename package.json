@@ -4,9 +4,8 @@
     "description": "A Phaser 3 2D platform game using Rollup and TypeScript",
     "main": "src/game.ts",
     "scripts": {
-        "dev": "rollup --config rollup.config.dev.js",
-        "build": "rollup --config rollup.config.dist.js",
-        "watch": "rollup --watch --config rollup.config.dev.js"
+        "build": "rollup --config rollup.config.prod.js",
+        "start": "rollup --watch --config rollup.config.dev.js"
     },
     "repository": {
         "type": "git",
