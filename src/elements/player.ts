@@ -94,7 +94,6 @@ export class Player extends Character {
         this.isOnWall = true;
         this.body.gravity.y = 0;
         this.body.velocity.y = gameOptions.playerGrip;
-        console.log("SLIDE");
       }
     }
   }
@@ -141,7 +140,6 @@ export class Player extends Character {
       ) {
         this.body.gravity.y = 0;
         this.body.velocity.y = 0;
-        console.log("GRAB");
         this.isOnWall = true;
         this.anims.play(ANIMATIONS.playerWallJump, true);
       }

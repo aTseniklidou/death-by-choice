@@ -1,6 +1,7 @@
 import { Side } from "../enums";
+import { Tile } from "./base/tile";
 
-export class VerticalTile extends Phaser.Physics.Arcade.Sprite {
+export class VerticalTile extends Tile {
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -11,11 +12,6 @@ export class VerticalTile extends Phaser.Physics.Arcade.Sprite {
   ) {
     super(scene, x, y, texture, frame);
 
-    scene.add.existing(this);
-    scene.physics.add.existing(this);
-    this.setImmovable(true);
-    this.getBody().setAllowGravity(false);
-    this.setOrigin(1, 1);
     if (enableCollision !== Side.up) {
       this.getBody().checkCollision.up = false;
     }

@@ -23,8 +23,6 @@ export class Enemy extends Character {
     this.hp = 0;
 
     this.initAnimations();
-    scene.add.existing(this);
-    scene.physics.add.existing(this);
     //  this.setImmovable(true);
 
     this.getBody().setSize(
@@ -90,7 +88,6 @@ export class Enemy extends Character {
   public getDamage(value: number): void {
     super.getDamage(value);
     if (this.hp <= 0) {
-      console.log("ZERO");
       this.disableBody(true, true);
     }
   }
