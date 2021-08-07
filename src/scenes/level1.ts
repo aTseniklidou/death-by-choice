@@ -1,19 +1,14 @@
 import { Enemy } from "../elements/enemy";
 import { Level } from "../elements/level";
 import { Player } from "../elements/player";
-import { Text } from "../elements/base/text";
-import { Score, ScoreOperations } from "../elements/score";
-import { Tile } from "../elements/base/tile";
-import { EVENTS, Side, WAYS_TO_DIE } from "../enums";
+import { Side, WAYS_TO_DIE } from "../enums";
 import { Projectile } from "../elements/projectile";
 import { Trap } from "../trap";
 import { Direction, Platform } from "../elements/platform";
 import { Collectable } from "../elements/collectable";
-import { Button } from "../elements/base/button";
 import {
   defaultGroupSettings,
   gravityDefyGroupSettings,
-  mapDeathsText,
   staticGroupSettings,
 } from "../configs";
 import { RotatingPlatform } from "../elements/rotatingPlatform";
@@ -41,82 +36,30 @@ const levelObjectives = [
   WAYS_TO_DIE.burned,
 ];
 
-//TODO: move any common logic for all levels in Level Class
 export class Level1 extends Level {
-  protected groundLayer!: Phaser.GameObjects.Group;
-  protected wallGroup!: Phaser.GameObjects.Group;
-  protected worldWallsGroup!: Phaser.GameObjects.Group;
-  protected ground!: Tile;
-  protected enemies!: Phaser.GameObjects.Group;
-  protected projectilesGroup!: Phaser.GameObjects.Group;
-  protected recoilGroup!: Phaser.GameObjects.Group;
-  protected platformGroup!: Phaser.GameObjects.Group;
-  protected collectables!: Phaser.GameObjects.Group;
-  protected scoreLeft!: Score;
-  protected scoreRight!: Score;
-  protected levelInfo!: Text;
-  protected waysToDie!: string[];
-  protected remainingWaysToDie!: string[];
-
-  protected spikes: Phaser.GameObjects.Sprite;
-
+  private spikes: Phaser.GameObjects.Sprite;
   constructor() {
-    super(1);
-    this.waysToDie = levelObjectives;
-    this.remainingWaysToDie = levelObjectives;
+    super(1, levelObjectives);
   }
 
   create(): void {
-    this.initUI();
-    this.initWorld();
+    this.initPlayer(playerStartPosition);
     this.setupLevel();
-    this.initPlayer();
     this.initEnemies();
-    this.initObstacles();
-    this.initObjectives(this.waysToDie.length);
-    // this.initCamera();
+    this.initTraps();
+    this.initCollectables();
+    this.initUI();
 
     this.setupColliders();
     this.setupEvents();
   }
 
-  update(): void {
-    this.player.update();
-    if (this.player.getBody().checkWorldBounds()) {
-      this.player.getDamage(1, WAYS_TO_DIE.fell);
-    }
-  }
-
-  private setupColliders() {
-    this.physics.add.collider(this.player, this.groundLayer, () => {
-      this.player.setWallJump(false);
-    });
-    this.physics.add.collider(this.player, this.wallGroup, () => {
-      this.player.setWallJump(true);
-    });
-    this.physics.add.collider(this.player, this.worldWallsGroup, () => {
-      this.player.setWallJump(false);
-    });
-    this.physics.add.collider(this.player, this.recoilGroup, () => {
-      this.player.setWallJump(false);
-    });
+  protected setupColliders() {
+    super.setupColliders();
 
     this.physics.add.collider(this.player, this.spikes, () => {
       this.player.getDamage(1, WAYS_TO_DIE.spikes);
     });
-    this.physics.add.overlap(
-      this.player,
-      this.collectables,
-      (_, collectable) => {
-        this.player.setWallJump(false);
-        collectable.destroy();
-        this.collectables.remove(collectable);
-        this.scoreLeft.changeValue(ScoreOperations.DECREASE, 1);
-        if (!this.collectables.getChildren().length) {
-          this.levelInfo.setText("YOU WIN - the safe way!");
-        }
-      }
-    );
     this.physics.add.collider(this.player, this.enemies, (_, enemy: Enemy) => {
       const hitByEnemyFront =
         (enemy.scaleX > 0 && enemy.body.touching.left) ||
@@ -127,6 +70,14 @@ export class Level1 extends Level {
       }
     });
     this.physics.add.collider(this.groundLayer, this.enemies);
+    this.physics.add.overlap(
+      this.enemies,
+      this.projectilesGroup,
+      (enemy, projectile) => {
+        (enemy as Enemy).getDamage(1);
+        (projectile as Projectile).disableBody(true, true);
+      }
+    );
     this.physics.add.collider(
       this.player,
       this.platformGroup,
@@ -143,102 +94,9 @@ export class Level1 extends Level {
         }
       }
     );
-
-    this.physics.add.overlap(
-      this.player,
-      this.projectilesGroup,
-      (player, projectile) => {
-        (player as Player).getDamage(1, WAYS_TO_DIE.backfire);
-        (projectile as Projectile).disableBody(true, true);
-      }
-    );
-    this.physics.add.overlap(
-      this.enemies,
-      this.projectilesGroup,
-      (enemy, projectile) => {
-        (enemy as Enemy).getDamage(1);
-        (projectile as Projectile).disableBody(true, true);
-      }
-    );
-    this.physics.add.collider(
-      this.wallGroup,
-      this.projectilesGroup,
-      (_, projectile) => {
-        (projectile as Projectile).disableBody(true, true);
-      }
-    );
-    this.physics.add.collider(
-      this.worldWallsGroup,
-      this.projectilesGroup,
-      (_, projectile) => {
-        (projectile as Projectile).disableBody(true, true);
-      }
-    );
-    this.physics.add.collider(
-      this.recoilGroup,
-      this.projectilesGroup,
-      (_, projectile) => {
-        (projectile as Projectile).recoil();
-      }
-    );
   }
 
-  private setupEvents() {
-    this.game.events.on(EVENTS.shoot, () => {
-      const disabledItem: any = this.projectilesGroup
-        .getChildren()
-        .find((p: Projectile) => !p.active);
-      // recycle projectiles
-      if (disabledItem) {
-        disabledItem.enable();
-      } else {
-        this.projectilesGroup.add(new Projectile(this, this.player));
-      }
-    });
-    this.game.events.on(
-      EVENTS.died,
-      (wayPlayerDied: WAYS_TO_DIE) => {
-        this.collectables.clear(true, true);
-        if (this.remainingWaysToDie.includes(wayPlayerDied)) {
-          this.remainingWaysToDie = this.remainingWaysToDie.filter(
-            (way) => way !== wayPlayerDied
-          );
-          this.scoreRight.changeValue(ScoreOperations.DECREASE, 1);
-          if (this.remainingWaysToDie.length) {
-            this.levelInfo.setText(
-              "Find all ways to die! Restart to get the fruits"
-            );
-            this.scoreLeft.destroy();
-          } else {
-            this.levelInfo.setText("YOU WIN - with sacrifice!");
-          }
-          new Tile(
-            this,
-            this.player.body.position.x,
-            this.player.body.position.y,
-            "shadow"
-          );
-          new Text(
-            this,
-            this.player.body.position.x,
-            this.player.body.position.y - 10,
-            mapDeathsText(wayPlayerDied)
-          );
-        }
-        this.player.body.position.x = playerStartPosition.x;
-        this.player.body.position.y =
-          this.game.canvas.height + playerStartPosition.y;
-      },
-      this
-    );
-  }
-  private initUI(): void {
-    new Button(this.game.canvas.width - 60, 60, "Reset", this, () => {
-      this.scene.restart();
-    });
-  }
-
-  private initObstacles(): void {
+  private initTraps(): void {
     const walls = this.wallGroup.getChildren();
     const positionOfTopWall = walls[walls.length - 1].body;
     this.spikes = new Trap(
@@ -249,7 +107,7 @@ export class Level1 extends Level {
     );
   }
 
-  private initObjectives(total: number): void {
+  private initCollectables(): void {
     this.collectables = this.physics.add.group(gravityDefyGroupSettings);
     this.collectables.add(new Collectable(this, 100, 300, "collectable"));
     this.collectables.add(new Collectable(this, 700, 500, "collectable"));
@@ -259,34 +117,6 @@ export class Level1 extends Level {
     this.collectables.add(
       new Collectable(this, platformWithFruit, 300, "collectable")
     );
-    this.levelInfo = new Text(
-      this,
-      20,
-      20,
-      "Find all ways to die or collect all fruits!"
-    );
-    this.scoreRight = new Score(
-      this,
-      this.game.canvas.width - 120,
-      20,
-      this.waysToDie.length,
-      "deaths"
-    );
-    this.scoreLeft = new Score(
-      this,
-      this.game.canvas.width - 220,
-      20,
-      this.collectables.getChildren().length,
-      "fruits"
-    );
-  }
-  private initPlayer(): void {
-    this.player = new Player(
-      this,
-      playerStartPosition.x,
-      this.game.canvas.height + playerStartPosition.y
-    );
-    this.projectilesGroup = this.physics.add.group(gravityDefyGroupSettings);
   }
 
   private initEnemies(): void {
@@ -302,10 +132,10 @@ export class Level1 extends Level {
     );
   }
 
-  private setupLevel(): void {
+  protected setupLevel(): void {
+    this.worldWallsGroup = this.physics.add.group(staticGroupSettings);
     this.groundLayer = this.physics.add.group(staticGroupSettings);
     this.wallGroup = this.physics.add.group(staticGroupSettings);
-    this.worldWallsGroup = this.physics.add.group(staticGroupSettings);
     this.platformGroup = this.physics.add.group(staticGroupSettings);
     this.recoilGroup = this.physics.add.group(staticGroupSettings);
 
